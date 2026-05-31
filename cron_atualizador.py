@@ -9,8 +9,14 @@ from zoneinfo import ZoneInfo
 API_KEY = "53795b533294d9dd1065064221c9f3a4"
 HEADERS = {"x-rapidapi-key": API_KEY, "x-rapidapi-host": "v3.football.api-sports.io"}
 
+# Lista de campeonatos altamente comerciais para priorizar na grade
+LIGAS_PRINCIPAIS = [
+    "Serie A", "Serie B", "Premier League", "La Liga", "Serie A (Italy)", 
+    "Bundesliga", "Ligue 1", "UEFA Champions League", "UEFA Europa League", 
+    "Copa Libertadores", "Copa Sudamericana", "Copa do Brasil", "Major League Soccer"
+]
+
 def buscar_jogos_do_dia():
-    # Pega o dia atual estritamente no fuso de Brasília
     hoje_brasilia = datetime.now(ZoneInfo("America/Sao_Paulo")).strftime("%Y-%m-%d")
     url = f"https://v3.football.api-sports.io/fixtures?date={hoje_brasilia}"
     try:
@@ -20,17 +26,22 @@ def buscar_jogos_do_dia():
         return []
 
 jogos_do_dia = buscar_jogos_do_dia()
-f_free, f_vip = [], []
+
+# Separar os jogos encontrados para dar prioridade de escolha
+jogos_principais = []
+jogos_secundarios = []
 
 for item in jogos_do_dia: 
     data_iso = item["fixture"]["date"]
     try:
-        # Converte o horário internacional da API para o fuso correto de Brasília
         dt_utc = datetime.fromisoformat(data_iso.replace("Z", "+00:00"))
         dt_brasilia = dt_utc.astimezone(ZoneInfo("America/Sao_Paulo"))
-        horario_formatado = dt_brasilia.strftime("%d/%m às %H:%M")
         
-        # Garante que só entram na lista jogos cujo dia convertido seja HOJE no Brasil
+        # Filtro estrito de horário comercial para apostadores punter (00:01 às 22:00)
+        if not (0 <= dt_brasilia.hour <= 22):
+            continue
+            
+        horario_formatado = dt_brasilia.strftime("%d/%m às %H:%M")
         hoje_str = datetime.now(ZoneInfo("America/Sao_Paulo")).strftime("%d/%m")
         if dt_brasilia.strftime("%d/%m") != hoje_str:
             continue
@@ -41,6 +52,24 @@ for item in jogos_do_dia:
     away = item["teams"]["away"]["name"]
     liga = item["league"]["name"]
 
+    dados_partida = {
+        "Jogo": f"{home} x {away}", 
+        "Campeonato": liga, 
+        "Horario": horario_formatado
+    }
+
+    # Se a liga estiver na lista de elite, vai para a fila de prioridade
+    if any(p_liga.lower() in liga.lower() for p_liga in LIGAS_PRINCIPAIS):
+        jogos_principais.append(dados_partida)
+    else:
+        jogos_secundarios.append(dados_partida)
+
+# Junta as duas listas colocando as ligas principais no topo para o robô escolher primeiro
+todos_jogos_filtrados = jogos_principais + jogos_secundarios
+
+f_free, f_vip = [], []
+
+for jogo_base in todos_jogos_filtrados:
     confianca = random.randint(76, 94)
     mercados = ["Chutes Totais", "Faltas Totais", "Impedimentos Totais", "Faltas Individuais", "Chutes no Gol"]
     mercado = random.choice(mercados)
@@ -53,12 +82,12 @@ for item in jogos_do_dia:
         previsao = "Mais de 3.5"
 
     palpite = {
-        "Jogo": f"{home} x {away}", 
-        "Campeonato": liga, 
+        "Jogo": jogo_base["Jogo"], 
+        "Campeonato": jogo_base["Campeonato"], 
         "Mercado": mercado, 
         "Previsão": previsao, 
         "Confiança": f"{confianca}%",
-        "Horario": horario_formatado
+        "Horario": jogo_base["Horario"]
     }
     
     if confianca >= 85 and len(f_free) < 5:
@@ -261,4 +290,4 @@ with aba2:
 
 with open("app.py", "w", encoding="utf-8") as f:
     f.write(conteudo_app)
-print("Sincronização diária configurada com sucesso!")
+print("Filtro de relevância e horário configurado!")
