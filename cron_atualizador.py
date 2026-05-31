@@ -2,7 +2,7 @@ import requests
 import pandas as pd
 import json
 import random
-from datetime import datetime
+from datetime import datetime, timedelta
 
 # CONFIGURAÇÕES - Sua chave real da API-Football
 API_KEY = "53795b533294d9dd1065064221c9f3a4"
@@ -25,6 +25,16 @@ for item in jogos_do_dia[:25]:
     away = item["teams"]["away"]["name"]
     liga = item["league"]["name"]
     
+    # Puxar a data/hora original da API (Ex: 2026-05-31T18:00:00+00:00)
+    data_iso = item["fixture"]["date"]
+    try:
+        # Converte o texto em objeto de data e subtrai 3 horas para o fuso de Brasília
+        dt_utc = datetime.strptime(data_iso[:19], "%Y-%m-%dT%H:%M:%S")
+        dt_brasilia = dt_utc - timedelta(hours=3)
+        horario_formatado = dt_brasilia.strftime("%d/%m às %H:%M")
+    except:
+        horario_formatado = "Hoje"
+
     confianca = random.randint(76, 94)
     mercados = ["Chutes Totais", "Faltas Totais", "Impedimentos Totais", "Faltas Individuais", "Chutes no Gol"]
     mercado = random.choice(mercados)
@@ -36,7 +46,14 @@ for item in jogos_do_dia[:25]:
     else:
         previsao = "Mais de 3.5"
 
-    palpite = {"Jogo": f"{home} x {away}", "Campeonato": liga, "Mercado": mercado, "Previsão": previsao, "Confiança": f"{confianca}%"}
+    palpite = {
+        "Jogo": f"{home} x {away}", 
+        "Campeonato": liga, 
+        "Mercado": mercado, 
+        "Previsão": previsao, 
+        "Confiança": f"{confianca}%",
+        "Horario": horario_formatado
+    }
     
     if confianca >= 85 and len(f_free) < 5:
         f_free.append(palpite)
@@ -44,16 +61,15 @@ for item in jogos_do_dia[:25]:
         f_vip.append(palpite)
 
 if not f_free:
-    f_free = [{"Jogo": "Grade em atualização", "Campeonato": "Scout PRO", "Mercado": "Análise", "Previsão": "Aguarde", "Confiança": "100%"}]
+    f_free = [{"Jogo": "Grade em atualização", "Campeonato": "Scout PRO", "Mercado": "Análise", "Previsão": "Aguarde", "Confiança": "100%", "Horario": "--:--"}]
 if not f_vip:
-    f_vip = [{"Jogo": "Grade em atualização", "Campeonato": "Scout PRO", "Mercado": "Análise", "Previsão": "Aguarde", "Confiança": "100%"}]
+    f_vip = [{"Jogo": "Grade em atualização", "Campeonato": "Scout PRO", "Mercado": "Análise", "Previsão": "Aguarde", "Confiança": "100%", "Horario": "--:--"}]
 
-# DESIGN PREMIUM INJETADO NO APP.PY (Corrigido para evitar conflito de chaves)
+# DESIGN PREMIUM INJETADO NO APP.PY (Com data e hora inclusas no topo do card)
 conteudo_app = f"""import streamlit as st
 
 st.set_page_config(page_title="REI DA RODADA PRO - Scout EV+", page_icon="⚽", layout="centered")
 
-# Injeção de CSS para transformar o layout em Dark Mode Premium de Apostas
 st.markdown(\"\"\"
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
@@ -175,7 +191,7 @@ with aba1:
         card_html = f\"\"\"
         <div class="bet-card">
             <div class="card-header">
-                <span>🏆 {{jogo['Campeonato']}}</span>
+                <span>🏆 {{jogo['Campeonato']}} — 📅 {{jogo['Horario']}}</span>
                 <span class="badge-confianca">🔥 {{jogo['Confiança']}} Confiança</span>
             </div>
             <div class="card-teams">⚽ {{jogo['Jogo']}}</div>
@@ -215,7 +231,7 @@ with aba2:
             card_vip_html = f\"\"\"
             <div class="bet-card" style="border-left-color: #f1c40f;">
                 <div class="card-header">
-                    <span>👑 {{jogo['Campeonato']}} (VIP)</span>
+                    <span>👑 {{jogo['Campeonato']}} — 📅 {{jogo['Horario']}}</span>
                     <span class="badge-confianca" style="background-color:rgba(241,196,15,0.15); color:#f1c40f; border-color:rgba(241,196,15,0.3);">⭐ {{jogo['Confiança']}}</span>
                 </div>
                 <div class="card-teams">⚽ {{jogo['Jogo']}}</div>
@@ -239,4 +255,4 @@ with aba2:
 
 with open("app.py", "w", encoding="utf-8") as f:
     f.write(conteudo_app)
-print("Aplicativo atualizado com sucesso com layout profissional!")
+print("Aplicativo atualizado com sucesso com horários das partidas!")
