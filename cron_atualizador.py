@@ -2,15 +2,17 @@ import requests
 import pandas as pd
 import json
 import random
-from datetime import datetime, timedelta
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 # CONFIGURAÇÕES - Sua chave real da API-Football
 API_KEY = "53795b533294d9dd1065064221c9f3a4"
 HEADERS = {"x-rapidapi-key": API_KEY, "x-rapidapi-host": "v3.football.api-sports.io"}
 
 def buscar_jogos_do_dia():
-    hoje = datetime.now().strftime("%Y-%m-%d")
-    url = f"https://v3.football.api-sports.io/fixtures?date={hoje}"
+    # Busca os jogos com base na data atual de Brasília para sincronizar com a API
+    hoje_brasilia = datetime.now(ZoneInfo("America/Sao_Paulo")).strftime("%Y-%m-%d")
+    url = f"https://v3.football.api-sports.io/fixtures?date={hoje_brasilia}"
     try:
         response = requests.get(url, headers=HEADERS).json()
         return response.get("response", [])
@@ -25,12 +27,13 @@ for item in jogos_do_dia[:25]:
     away = item["teams"]["away"]["name"]
     liga = item["league"]["name"]
     
-    # Puxar a data/hora original da API (Ex: 2026-05-31T18:00:00+00:00)
+    # Puxar a data/hora original da API (UTC)
     data_iso = item["fixture"]["date"]
     try:
-        # Converte o texto em objeto de data e subtrai 3 horas para o fuso de Brasília
-        dt_utc = datetime.strptime(data_iso[:19], "%Y-%m-%dT%H:%M:%S")
-        dt_brasilia = dt_utc - timedelta(hours=3)
+        # Converte a string ISO da API tratando o fuso de forma correta e segura
+        dt_utc = datetime.fromisoformat(data_iso.replace("Z", "+00:00"))
+        # Converte o objeto diretamente para o fuso horário oficial de Brasília
+        dt_brasilia = dt_utc.astimezone(ZoneInfo("America/Sao_Paulo"))
         horario_formatado = dt_brasilia.strftime("%d/%m às %H:%M")
     except:
         horario_formatado = "Hoje"
@@ -65,7 +68,7 @@ if not f_free:
 if not f_vip:
     f_vip = [{"Jogo": "Grade em atualização", "Campeonato": "Scout PRO", "Mercado": "Análise", "Previsão": "Aguarde", "Confiança": "100%", "Horario": "--:--"}]
 
-# DESIGN PREMIUM INJETADO NO APP.PY (Com data e hora inclusas no topo do card)
+# DESIGN PREMIUM INJETADO NO APP.PY
 conteudo_app = f"""import streamlit as st
 
 st.set_page_config(page_title="REI DA RODADA PRO - Scout EV+", page_icon="⚽", layout="centered")
@@ -255,4 +258,4 @@ with aba2:
 
 with open("app.py", "w", encoding="utf-8") as f:
     f.write(conteudo_app)
-print("Aplicativo atualizado com sucesso com horários das partidas!")
+print("Aplicativo atualizado com sucesso com fuso horário corrigido!")
