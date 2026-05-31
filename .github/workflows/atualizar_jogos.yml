@@ -1,0 +1,28 @@
+name: Atualizador Automatico Rei da Rodada
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Baixar o código
+      uses: actions/checkout@v3
+    - name: Configurar Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+    - name: Instalar ferramentas
+      run: pip install requests pandas
+    - name: Rodar Robô
+      run: python cron_atualizador.py
+    - name: Salvar alterações
+      run: |
+        git config --global user.name "Robo Rei da Rodada"
+        git config --global user.email "robo@reidarodada.com"
+        git add app.py
+        git commit -m "🤖 Jogos atualizados automaticamente" || echo "Sem mudanças"
+        git push
