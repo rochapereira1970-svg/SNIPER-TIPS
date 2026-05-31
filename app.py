@@ -1,7 +1,14 @@
-from shiny import App, ui, render
+import streamlit as st
 import pandas as pd
 
-# 1. Dados do Módulo Free e VIP
+# Configuração da Página
+st.set_page_config(page_title="REIDARODADA - Palpites Pro", page_icon="⚽", layout="centered")
+
+st.title("👑 REI DA RODADA PRO")
+st.subheader("Previsões Inteligentes para Mercados de Scout")
+st.write("---")
+
+# Dados do Aplicativo (5 Free e 7 VIP)
 jogos_free = [
     {"Jogo": "Real Madrid x Barcelona", "Campeonato": "La Liga", "Mercado": "Chutes no Gol", "Previsão": "Mais de 8.5", "Confiança": "92%"},
     {"Jogo": "Man City x Liverpool", "Campeonato": "Premier League", "Mercado": "Faltas", "Previsão": "Menos de 24.5", "Confiança": "89%"},
@@ -15,49 +22,30 @@ jogos_vip = [
     {"Jogo": "Atlético Madrid x Sevilla", "Campeonato": "La Liga", "Mercado": "Cartões", "Previsão": "Mais de 4.5", "Confiança": "81%"},
     {"Jogo": "Porto x Benfica", "Campeonato": "Liga Portugal", "Mercado": "Chutes no Gol", "Previsão": "Mais de 9.5", "Confiança": "80%"},
     {"Jogo": "Inter x Napoli", "Campeonato": "Serie A", "Mercado": "Defesas", "Previsão": "Mais de 5.5", "Confiança": "79%"},
-    {"Jogo": "Ajax x Feyenoord", "Campeonato": "Eredivisie", "Mercado": "Impedimentos", "Previsão": "Mais de 4.5", "Confiança": "78%"},
+    {"Jogo": "Ajax x Feyenoord", "Campeonatos": "Eredivisie", "Mercado": "Impedimentos", "Previsão": "Mais de 4.5", "Confiança": "78%"},
     {"Jogo": "Boca Juniors x River Plate", "Campeonato": "Liga Argentina", "Mercado": "Faltas", "Previsão": "Mais de 29.5", "Confiança": "77%"},
     {"Jogo": "Flamengo x Palmeiras", "Campeonato": "Brasileirão", "Mercado": "Chutes Totais", "Previsão": "Mais de 25.5", "Confiança": "75%"}
 ]
 
-# 2. Interface Visual do Aplicativo
-app_ui = ui.page_fluid(
-    ui.panel_title("📊 ScoutPredictor PRO"),
-    ui.p("Previsões Inteligentes para Mercados de Scout (Faltas, Chutes, Impedimentos e Defesas)"),
+df_free = pd.DataFrame(jogos_free)
+df_vip = pd.DataFrame(jogos_vip)
+
+# Abas do Aplicativo
+aba1, aba2 = st.tabs(["Free (Grátis)", "VIP (Premium)"])
+
+with aba1:
+    st.success("✅ Suas 5 sugestões gratuitas de hoje estão liberadas!")
+    st.table(df_free)
+    st.write("---")
+    st.info("💡 Quer acessar as análises mais profundas com até 92% de assertividade?")
+    st.markdown("**Fale com o suporte no Telegram/Facebook para assinar o VIP e liberar mais 7 jogos!**")
+
+with aba2:
+    st.write("### 🔑 Área do Assinante")
+    senha_usuario = st.text_input("Insira sua chave de acesso VIP:", type="password")
     
-    ui.navset_tab(
-        ui.nav_panel("🆓 Módulo Gratuito",
-            ui.markdown("### ✅ Suas 5 sugestões gratuitas de hoje estão liberadas!"),
-            ui.output_table("tabela_free"),
-            ui.p("---"),
-            ui.markdown("### 💡 Quer acessar as análises mais profundas?\n**Assine nosso VIP para liberar mais 7 jogos por dia!**")
-        ),
-        ui.nav_panel("💎 Módulo VIP (Premium)",
-            ui.markdown("### 🔑 Área do Assinante"),
-            ui.input_password("senha", "Insira sua chave de acesso VIP:", value=""),
-            ui.output_ui("conteudo_vip")
-        )
-    )
-)
-
-# 3. Lógica do Aplicativo
-def server(input, output, session):
-    @output
-    @render.table
-    def tabela_free():
-        return pd.DataFrame(jogos_free)
-
-    @output
-    @render.ui
-    def conteudo_vip():
-        # Defina a senha que você quiser fornecer para os clientes que pagarem
-        if input.senha() == "VIP2026":
-            return ui.div(
-                ui.markdown("### 🎉 Acesso Concedido! Aqui estão seus 7 jogos extras:"),
-                ui.render_table(lambda: pd.DataFrame(jogos_vip))
-            )
-        elif input.senha() != "":
-            return ui.markdown("❌ **Chave de acesso inválida ou expirada.** Entre em contato no Telegram para renovar.")
-        return ui.markdown("Aguardando inserção da chave secreta...")
-
-app = App(app_ui, server)
+    if senha_usuario == "VIP2026":
+        st.success("Acesso VIP Concedido! Aqui estão seus 7 jogos extras:")
+        st.table(df_vip)
+    elif senha_usuario != "":
+        st.error("❌ Chave de acesso inválida ou expirada.")
