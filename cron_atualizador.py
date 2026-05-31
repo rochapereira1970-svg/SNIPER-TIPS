@@ -48,7 +48,7 @@ if not f_free:
 if not f_vip:
     f_vip = [{"Jogo": "Grade em atualização", "Campeonato": "Scout PRO", "Mercado": "Análise", "Previsão": "Aguarde", "Confiança": "100%"}]
 
-# DESIGN PREMIUM INJETADO NO APP.PY
+# DESIGN PREMIUM INJETADO NO APP.PY (Corrigido para evitar conflito de chaves)
 conteudo_app = f"""import streamlit as st
 
 st.set_page_config(page_title="REI DA RODADA PRO - Scout EV+", page_icon="⚽", layout="centered")
@@ -58,14 +58,12 @@ st.markdown(\"\"\"
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
         
-        /* Ajuste do fundo e fontes globais */
         html, body, [data-testid="stAppViewContainer"] {{
             background-color: #0d1117;
             color: #f0f6fc;
             font-family: 'Inter', sans-serif;
         }}
         
-        /* Estilização do cabeçalho principal */
         .main-title {{
             text-align: center;
             font-size: 2.2rem;
@@ -81,7 +79,6 @@ st.markdown(\"\"\"
             margin-bottom: 30px;
         }}
         
-        /* Customização das abas (Tabs) */
         .stTabs [data-baseweb="tab-list"] {{
             gap: 10px;
             justify-content: center;
@@ -98,9 +95,9 @@ st.markdown(\"\"\"
             background-color: #00ff87 !important;
             color: #0d1117 !important;
             border-color: #00ff87 !important;
+            border-bottom: none !important;
         }}
         
-        /* Card de palpite esportivo profissional */
         .bet-card {{
             background: linear-gradient(135deg, #161b22 0%, #21262d 100%);
             border-left: 5px solid #00ff87;
@@ -108,10 +105,6 @@ st.markdown(\"\"\"
             padding: 20px;
             margin-bottom: 18px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            transition: transform 0.2s;
-        }}
-        .bet-card:hover {{
-            transform: translateY(-2px);
         }}
         .card-header {{
             display: flex;
@@ -156,7 +149,6 @@ st.markdown(\"\"\"
             border: 1px solid rgba(0, 255, 135, 0.3);
         }}
         
-        /* Banner de CTA para o VIP */
         .vip-banner {{
             background: linear-gradient(135deg, #f1c40f 0%, #f39c12 100%);
             color: #0d1117;
@@ -165,7 +157,6 @@ st.markdown(\"\"\"
             text-align: center;
             font-weight: 700;
             margin-top: 25px;
-            box-shadow: 0 4px 15px rgba(241, 196, 15, 0.3);
         }}
     </style>
 \"\"\", unsafe_allow_html=True)
@@ -181,25 +172,26 @@ aba1, aba2 = st.tabs(["📊 PALPITES FREE", "🔒 ACESSO VIP"])
 with aba1:
     st.write("")
     for jogo in jogos_free:
-        st.markdown(f\"\"\"
+        card_html = f\"\"\"
         <div class="bet-card">
             <div class="card-header">
-                <span>🏆 {jogo['Campeonato']}</span>
-                <span class="badge-confianca">🔥 {jogo['Confiança']} Confiança</span>
+                <span>🏆 {{jogo['Campeonato']}}</span>
+                <span class="badge-confianca">🔥 {{jogo['Confiança']}} Confiança</span>
             </div>
-            <div class="card-teams">⚽ {jogo['Jogo']}</div>
+            <div class="card-teams">⚽ {{jogo['Jogo']}}</div>
             <div class="card-body-info">
                 <div>
                     <div class="market-title">Mercado de Scout</div>
-                    <div style="font-weight:600; color:#fff;">{jogo['Mercado']}</div>
+                    <div style="font-weight:600; color:#fff;">{{jogo['Mercado']}}</div>
                 </div>
                 <div style="text-align: right;">
                     <div class="market-title">Entrada Sugerida</div>
-                    <div class="market-value">{jogo['Previsão']}</div>
+                    <div class="market-value">{{jogo['Previsão']}}</div>
                 </div>
             </div>
         </div>
-        \"\"\", unsafe_allow_html=True)
+        \"\"\"
+        st.markdown(card_html, unsafe_allow_html=True)
     
     st.markdown(\"\"\"
     <div class="vip-banner">
@@ -220,25 +212,26 @@ with aba2:
         st.write("")
         st.success("🔓 Acesso Premium Concedido! Boas Greens!")
         for jogo in jogos_vip:
-            st.markdown(f\"\"\"
+            card_vip_html = f\"\"\"
             <div class="bet-card" style="border-left-color: #f1c40f;">
                 <div class="card-header">
-                    <span>👑 {jogo['Campeonato']} (VIP)</span>
-                    <span class="badge-confianca" style="background-color:rgba(241,196,15,0.15); color:#f1c40f; border-color:rgba(241,196,15,0.3);">⭐ {jogo['Confiança']}</span>
+                    <span>👑 {{jogo['Campeonato']}} (VIP)</span>
+                    <span class="badge-confianca" style="background-color:rgba(241,196,15,0.15); color:#f1c40f; border-color:rgba(241,196,15,0.3);">⭐ {{jogo['Confiança']}}</span>
                 </div>
-                <div class="card-teams">⚽ {jogo['Jogo']}</div>
+                <div class="card-teams">⚽ {{jogo['Jogo']}}</div>
                 <div class="card-body-info">
                     <div>
                         <div class="market-title">Mercado de Scout</div>
-                        <div style="font-weight:600; color:#fff;">{jogo['Mercado']}</div>
+                        <div style="font-weight:600; color:#fff;">{{jogo['Mercado']}}</div>
                     </div>
                     <div style="text-align: right;">
                         <div class="market-title">Entrada Sugerida</div>
-                        <div class="market-value" style="color:#f1c40f;">{jogo['Previsão']}</div>
+                        <div class="market-value" style="color:#f1c40f;">{{jogo['Previsão']}}</div>
                     </div>
                 </div>
             </div>
-            \"\"\", unsafe_allow_html=True)
+            \"\"\"
+            st.markdown(card_vip_html, unsafe_allow_html=True)
     elif senha_usuario != "":
         st.write("")
         st.error("❌ Chave de acesso inválida ou expirada. Entre em contato com o administrador.")
