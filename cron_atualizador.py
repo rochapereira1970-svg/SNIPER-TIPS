@@ -4,7 +4,7 @@ import json
 import random
 from datetime import datetime
 
-# CONFIGURAÇÕES - Sua chave real da API-Football já configurada
+# CONFIGURAÇÕES - Sua chave real da API-Football
 API_KEY = "53795b533294d9dd1065064221c9f3a4"
 HEADERS = {"x-rapidapi-key": API_KEY, "x-rapidapi-host": "v3.football.api-sports.io"}
 
@@ -17,18 +17,14 @@ def buscar_jogos_do_dia():
     except:
         return []
 
-# O robô filtra as partidas e monta as listas automatizadas
 jogos_do_dia = buscar_jogos_do_dia()
-
 f_free, f_vip = [], []
 
-# Seleciona as principais ligas do dia para focar onde o mercado de Scout tem valor esperado (EV+)
-for item in jogos_do_dia[:25]: # Limite de varredura seguro para plano gratuito
+for item in jogos_do_dia[:25]: 
     home = item["teams"]["home"]["name"]
     away = item["teams"]["away"]["name"]
     liga = item["league"]["name"]
     
-    # Modelo analítico baseado no cruzamento de dados de tendências abertas (BTTS)
     confianca = random.randint(76, 94)
     mercados = ["Chutes Totais", "Faltas Totais", "Impedimentos Totais", "Faltas Individuais", "Chutes no Gol"]
     mercado = random.choice(mercados)
@@ -47,13 +43,11 @@ for item in jogos_do_dia[:25]: # Limite de varredura seguro para plano gratuito
     elif confianca < 85 and len(f_vip) < 7:
         f_vip.append(palpite)
 
-# Se o dia tiver poucos jogos na grade, preenchemos com segurança técnica
 if not f_free:
     f_free = [{"Jogo": "Aguardando Grade Completa", "Campeonato": "Scout PRO", "Mercado": "Análise em Andamento", "Previsão": "Verificando Linhas", "Confiança": "100%"}]
 if not f_vip:
     f_vip = [{"Jogo": "Aguardando Grade Completa", "Campeonato": "Scout PRO", "Mercado": "Análise em Andamento", "Previsão": "Verificando Linhas", "Confiança": "100%"}]
 
-# CÓDIGO QUE REESCREVE O SEU APP.PY SOZINHO COM OS JOGOS DIÁRIOS
 conteudo_app = f"""import streamlit as st
 import pandas as pd
 
