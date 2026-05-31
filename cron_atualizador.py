@@ -10,7 +10,7 @@ API_KEY = "53795b533294d9dd1065064221c9f3a4"
 HEADERS = {"x-rapidapi-key": API_KEY, "x-rapidapi-host": "v3.football.api-sports.io"}
 
 def buscar_jogos_do_dia():
-    # Busca os jogos com base na data atual de Brasília para sincronizar com a API
+    # Pega o dia atual estritamente no fuso de Brasília
     hoje_brasilia = datetime.now(ZoneInfo("America/Sao_Paulo")).strftime("%Y-%m-%d")
     url = f"https://v3.football.api-sports.io/fixtures?date={hoje_brasilia}"
     try:
@@ -22,21 +22,24 @@ def buscar_jogos_do_dia():
 jogos_do_dia = buscar_jogos_do_dia()
 f_free, f_vip = [], []
 
-for item in jogos_do_dia[:25]: 
+for item in jogos_do_dia: 
+    data_iso = item["fixture"]["date"]
+    try:
+        # Converte o horário internacional da API para o fuso correto de Brasília
+        dt_utc = datetime.fromisoformat(data_iso.replace("Z", "+00:00"))
+        dt_brasilia = dt_utc.astimezone(ZoneInfo("America/Sao_Paulo"))
+        horario_formatado = dt_brasilia.strftime("%d/%m às %H:%M")
+        
+        # Garante que só entram na lista jogos cujo dia convertido seja HOJE no Brasil
+        hoje_str = datetime.now(ZoneInfo("America/Sao_Paulo")).strftime("%d/%m")
+        if dt_brasilia.strftime("%d/%m") != hoje_str:
+            continue
+    except:
+        continue
+
     home = item["teams"]["home"]["name"]
     away = item["teams"]["away"]["name"]
     liga = item["league"]["name"]
-    
-    # Puxar a data/hora original da API (UTC)
-    data_iso = item["fixture"]["date"]
-    try:
-        # Converte a string ISO da API tratando o fuso de forma correta e segura
-        dt_utc = datetime.fromisoformat(data_iso.replace("Z", "+00:00"))
-        # Converte o objeto diretamente para o fuso horário oficial de Brasília
-        dt_brasilia = dt_utc.astimezone(ZoneInfo("America/Sao_Paulo"))
-        horario_formatado = dt_brasilia.strftime("%d/%m às %H:%M")
-    except:
-        horario_formatado = "Hoje"
 
     confianca = random.randint(76, 94)
     mercados = ["Chutes Totais", "Faltas Totais", "Impedimentos Totais", "Faltas Individuais", "Chutes no Gol"]
@@ -201,7 +204,7 @@ with aba1:
             <div class="card-body-info">
                 <div>
                     <div class="market-title">Mercado de Scout</div>
-                    <div style="font-weight:600; color:#fff;">{{jogo['Mercado']}}</div>
+                    <div style="font-weight:600; color:#fff;">{{jogo['Market'] if 'Market' in jogo else jogo.get('Mercado', 'Scout')}}</div>
                 </div>
                 <div style="text-align: right;">
                     <div class="market-title">Entrada Sugerida</div>
@@ -241,7 +244,7 @@ with aba2:
                 <div class="card-body-info">
                     <div>
                         <div class="market-title">Mercado de Scout</div>
-                        <div style="font-weight:600; color:#fff;">{{jogo['Mercado']}}</div>
+                        <div style="font-weight:600; color:#fff;">{{jogo['Market'] if 'Market' in jogo else jogo.get('Mercado', 'Scout')}}</div>
                     </div>
                     <div style="text-align: right;">
                         <div class="market-title">Entrada Sugerida</div>
@@ -258,4 +261,4 @@ with aba2:
 
 with open("app.py", "w", encoding="utf-8") as f:
     f.write(conteudo_app)
-print("Aplicativo atualizado com sucesso com fuso horário corrigido!")
+print("Sincronização diária configurada com sucesso!")
