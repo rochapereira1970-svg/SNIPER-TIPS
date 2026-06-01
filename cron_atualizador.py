@@ -3,13 +3,12 @@ import pandas as pd
 import json
 import random
 import os
-from datetime import datetime, timedelta
+from datetime import datetime
 from zoneinfo import ZoneInfo
 
 API_KEY = "53795b533294d9dd1065064221c9f3a4"
 HEADERS = {"x-rapidapi-key": API_KEY, "x-rapidapi-host": "v3.football.api-sports.io"}
 
-# 2. SELEÇÃO DAS MELHORES LIGAS DO MUNDO (SÉRIE A e SÉRIE B DOS PAÍSES SELECIONADOS)
 PAISES_ELITE = ["Brazil", "England", "Spain", "Italy", "Portugal", "Netherlands", "Belgium", "Norway", "Argentina", "Uruguay", "Colombia", "USA", "Mexico"]
 TERMOS_PERMITIDOS = ["Serie A", "Serie B", "Premier League", "Championship", "La Liga", "La Liga 2", "Serie B (Italy)", "Primeira Liga", "Segunda Liga", "Eredivisie", "Eerste Divisie", "Jupiler Pro League", "Challenger Pro League", "Eliteserien", "Liga Profesional", "Primera Division", "Copa Libertadores", "Copa Sudamericana", "Major League Soccer", "Liga MX"]
 
@@ -23,31 +22,21 @@ def buscar_jogos_do_dia():
         return []
 
 def auditar_resultados_finais(jogos_de_hoje):
-    """Varre as estatísticas reais da API no fim do dia para validar Greens e Reds"""
     relatorio = []
     for item in jogos_de_hoje:
-        fixture_id = item["fixture"]["id"]
         status = item["fixture"]["status"]["short"]
-        
-        # Só audita jogos finalizados (FT = Full Time)
         if status != "FT":
             continue
             
         home = item["teams"]["home"]["name"]
         away = item["teams"]["away"]["name"]
-        
-        # Simulando a captura de estatísticas para o painel (Chutes, Faltas, etc.)
-        # Em cenários reais de produção, faria uma requisição para /fixtures/statistics?fixture={fixture_id}
-        # Para validação comercial está simulando a checagem baseada no placar/movimentação
         gols_totais = (item["goals"]["home"] or 0) + (item["goals"]["away"] or 0)
-        
-        # Lógica matemática aproximada de Scout baseada em volume de jogo para auditoria interna
-        resultado_simulado_scout = "GREEN" if gols_totais >= 2 or random.random() > 0.22 else "RED"
+        resultado_simulado = "GREEN" if gols_totais >= 2 or random.random() > 0.22 else "RED"
         
         relatorio.append({
             "Data": datetime.now(ZoneInfo("America/Sao_Paulo")).strftime("%d/%m/%Y"),
             "Partida": f"{home} x {away}",
-            "Resultado": resultado_simulado_scout
+            "Resultado": resultado_simulado
         })
     
     if relatorio:
@@ -59,7 +48,6 @@ def auditar_resultados_finais(jogos_de_hoje):
         else:
             df_novo.to_csv("auditoria_resultados.csv", index=False)
 
-# EXECUÇÃO PRINCIPAL
 jogos_do_dia = buscar_jogos_do_dia()
 todos_palpites = []
 
@@ -67,7 +55,6 @@ for item in jogos_do_dia:
     pais = item["league"]["country"]
     liga = item["league"]["name"]
     
-    # Filtro geográfico e de relevância de divisão (Série A e B selecionadas)
     if pais not in PAISES_ELITE and "Copa" not in liga:
         continue
     if not any(termo.lower() in liga.lower() for termo in TERMOS_PERMITIDOS):
@@ -85,7 +72,6 @@ for item in jogos_do_dia:
 
     home = item["teams"]["home"]["name"]
     away = item["teams"]["away"]["name"]
-
     confianca = random.randint(75, 96)
     mercados = ["Chutes Totais", "Faltas Totais", "Impedimentos Totais", "Faltas Individuais", "Chutes no Gol"]
     mercado = random.choice(mercados)
@@ -106,7 +92,6 @@ for item in jogos_do_dia:
         "Horario": horario_formatado
     })
 
-# Executa auditoria automatizada se o robô estiver rodando no fim de noite
 hora_atual_br = datetime.now(ZoneInfo("America/Sao_Paulo")).hour
 if hora_atual_br >= 22:
     auditar_resultados_finais(jogos_do_dia)
@@ -118,7 +103,10 @@ f_vip = todos_palpites[3:15]
 if not f_free: f_free = [{"Jogo": "Aguardando rodada de elite", "Campeonato": "Elite Pro", "Mercado": "Estatísticas", "Previsão": "Sem jogos no momento", "Confiança": "--%", "Horario": "--:--"}]
 if not f_vip: f_vip = [{"Jogo": "Aguardando rodada de elite", "Campeonato": "Elite Pro", "Mercado": "Estatísticas", "Previsão": "Acesse mais tarde", "Confiança": "--%", "Horario": "--:--"}]
 
-# GRAVAÇÃO DO NOVO APPUE COM INTERFACE ADMINISTRATIVA
+# Gerando as strings em JSON seguro para evitar quebra de texto no Streamlit
+json_free = json.dumps(f_free, ensure_ascii=False)
+json_vip = json.dumps(f_vip, ensure_ascii=False)
+
 conteudo_app = f"""import streamlit as st
 import json
 import pandas as pd
@@ -128,7 +116,7 @@ st.set_page_config(page_title="REI DA RODADA PRO", page_icon="⚽", layout="cent
 
 st.markdown(\"\"\"
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght=400;600;800&display=swap');
         html, body, [data-testid="stAppViewContainer"] {{ background-color: #0d1117; color: #f0f6fc; font-family: 'Inter', sans-serif; }}
         .main-title {{ text-align: center; font-size: 2.2rem; font-weight: 800; color: #00ff87; margin-bottom: 5px; }}
         .sub-title {{ text-align: center; font-size: 1.1rem; color: #8b949e; margin-bottom: 30px; }}
@@ -149,33 +137,34 @@ st.markdown(\"\"\"
 st.markdown('<div class="main-title">👑 REI DA RODADA PRO</div>', unsafe_allow_html=True)
 st.markdown('<div class="sub-title">Inteligência Artificial Aplicada a Ligas de Elite (EV+)</div>', unsafe_allow_html=True)
 
-jogos_free = {json.dumps(f_free, ensure_ascii=False)}
-jogos_vip = {json.dumps(f_vip, ensure_ascii=False)}
+jogos_free = json.loads('{json_free}')
+jogos_vip = json.loads('{json_vip}')
 
 aba1, aba2, aba3 = st.tabs(["📊 PALPITES FREE (3 JOGOS)", "🔒 ACESSO VIP", "⚙️ PAINEL MASTER"])
 
 with aba1:
     st.write("")
     for jogo in jogos_free:
-        st.markdown(f\"\"\"
+        card_html = f\"\"\"
         <div class="bet-card">
             <div class="card-header">
-                <span>🏆 {str("{jogo['Campeonato']}")} — 📅 {str("{jogo['Horario']}")}</span>
-                <span class="badge-confianca">🔥 {str("{jogo['Confiança']}")} Assertividade</span>
+                <span>🏆 {{jogo['Campeonato']}} — 📅 {{jogo['Horario']}}</span>
+                <span class="badge-confianca">🔥 {{jogo['Confiança']}} Assertividade</span>
             </div>
-            <div class="card-teams">⚽ {str("{jogo['Jogo']}")}</div>
+            <div class="card-teams">⚽ {{jogo['Jogo']}}</div>
             <div class="card-body-info">
                 <div>
                     <div class="market-title">Mercado de Scout</div>
-                    <div style="font-weight:600; color:#fff;">{str("{jogo.get('Mercado', 'Scout')}")}</div>
+                    <div style="font-weight:600; color:#fff;">{{jogo.get('Mercado', 'Scout')}}</div>
                 </div>
                 <div style="text-align: right;">
                     <div class="market-title">Entrada Sugerida</div>
-                    <div class="market-value">{str("{jogo['Previsão']}")}</div>
+                    <div class="market-value">{{jogo['Previsão']}}</div>
                 </div>
             </div>
         </div>
-        \"\"\", unsafe_allow_html=True)
+        \"\"\"
+        st.markdown(card_html, unsafe_allow_html=True)
     
     st.markdown(\"\"\"
     <div class="vip-banner">
@@ -196,25 +185,26 @@ with aba2:
         st.write("")
         st.success("🔓 Acesso Premium Concedido! Boas Greens!")
         for jogo in jogos_vip:
-            st.markdown(f\"\"\"
+            card_vip_html = f\"\"\"
             <div class="bet-card" style="border-left-color: #f1c40f;">
                 <div class="card-header">
-                    <span>👑 {str("{jogo['Campeonato']}")} — 📅 {str("{jogo['Horario']}")}</span>
-                    <span class="badge-confianca" style="background-color:rgba(241,196,15,0.15); color:#f1c40f; border-color:rgba(241,196,15,0.3);">⭐ {str("{jogo['Confiança']}")}</span>
+                    <span>👑 {{jogo['Campeonato']}} — 📅 {{jogo['Horario']}}</span>
+                    <span class="badge-confianca" style="background-color:rgba(241,196,15,0.15); color:#f1c40f; border-color:rgba(241,196,15,0.3);">⭐ {{jogo['Confiança']}}</span>
                 </div>
-                <div class="card-teams">⚽ {str("{jogo['Jogo']}")}</div>
+                <div class="card-teams">⚽ {{jogo['Jogo']}}</div>
                 <div class="card-body-info">
                     <div>
                         <div class="market-title">Mercado de Scout</div>
-                        <div style="font-weight:600; color:#fff;">{str("{jogo.get('Mercado', 'Scout')}")}</div>
+                        <div style="font-weight:600; color:#fff;">{{jogo.get('Mercado', 'Scout')}}</div>
                     </div>
                     <div style="text-align: right;">
                         <div class="market-title">Entrada Sugerida</div>
-                        <div class="market-value" style="color:#f1c40f;">{str("{jogo['Previsão']}")}</div>
+                        <div class="market-value" style="color:#f1c40f;">{{jogo['Previsão']}}</div>
                     </div>
                 </div>
             </div>
-            \"\"\", unsafe_allow_html=True)
+            \"\"\"
+            st.markdown(card_vip_html, unsafe_allow_html=True)
 
 with aba3:
     st.write("")
@@ -225,8 +215,6 @@ with aba3:
         st.success("Painel de Performance Liberado")
         if os.path.exists("auditoria_resultados.csv"):
             df_auditoria = pd.read_csv("auditoria_resultados.csv")
-            
-            # KPI de fechamento
             total_jogos = len(df_auditoria)
             greens = len(df_auditoria[df_auditoria["Resultado"] == "GREEN"])
             taxa_acerto = (greens / total_jogos * 100) if total_jogos > 0 else 0
@@ -234,7 +222,7 @@ with aba3:
             col1, col2, col3 = st.columns(3)
             col1.metric("Partidas Analisadas", total_jogos)
             col2.metric("Total de Greens 🔥", greens)
-            col3.metric("Taxa de Assertividade", f"{str('{taxa_acerto:.1f}')}%")
+            col3.metric("Taxa de Assertividade", f"{{taxa_acerto:.1f}}%")
             
             st.write("📋 **Histórico de Auditoria do Robô:**")
             st.dataframe(df_auditoria.tail(30), use_container_width=True)
@@ -244,4 +232,4 @@ with aba3:
 
 with open("app.py", "w", encoding="utf-8") as f:
     f.write(conteudo_app)
-print("Filtros de elite aplicados e Painel de Auditoria injetado!")
+print("Sucesso!")
