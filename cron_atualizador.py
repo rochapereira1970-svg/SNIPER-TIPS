@@ -25,7 +25,10 @@ def buscar_jogos_api():
 # Carrega ou inicializa o histórico do dia
 if os.path.exists(arquivo_dados):
     with open(arquivo_dados, "r", encoding="utf-8") as f:
-        dados_armazenados = json.load(f)
+        try:
+            dados_armazenados = json.load(f)
+        except:
+            dados_armazenados = {"data": hoje_br, "jogos": []}
     if dados_armazenados.get("data") != hoje_br:
         dados_armazenados = {"data": hoje_br, "jogos": []}
 else:
@@ -35,7 +38,7 @@ jogos_api = buscar_jogos_api()
 hora_atual_br = datetime.now(ZoneInfo("America/Sao_Paulo")).hour
 
 # SE O ARQUIVO ESTIVER VAZIO (MADRUGADA), CRIA A GRADE COM TODAS AS ENTRADAS EM AMARELO
-if not dados_armazenados["jogos"]:
+if not dados_armazenados.get("jogos"):
     todos_palpites = []
     for item in jogos_api: 
         pais = item["league"]["country"]
@@ -81,25 +84,26 @@ if not dados_armazenados["jogos"]:
 
 # SE JÁ EXISTIREM JOGOS SALVOS E FOR NOITE (AUDITORIA), APENAS ATUALIZA OS STATUS SEM APAGAR NADA
 elif hora_atual_br >= 22:
-    for jogo_salvo in dados_armazenados["jogos"]:
+    for jogo_salvo in dados_armazenados.get("jogos", []):
         if jogo_salvo["Status"] == "AGUARDANDO":
             match = next((x for x in jogos_api if x["fixture"]["id"] == jogo_salvo["id"]), None)
             if match and match["fixture"]["status"]["short"] == "FT":
                 gols = (match["goals"]["home"] or 0) + (match["goals"]["away"] or 0)
                 jogo_salvo["Status"] = "GREEN" if gols >= 2 or random.random() > 0.25 else "RED"
 
-# Salva de forma segura
+# Salva de forma segura o JSON de banco de dados
 with open(arquivo_dados, "w", encoding="utf-8") as f:
     json.dump(dados_armazenados, f, ensure_ascii=False, indent=4)
 
 # Garante a divisão comercial mesmo se a lista for curta
-f_free = dados_armazenados["jogos"][:3]
-f_vip = dados_armazenados["jogos"][3:15]
+jogos_lista = dados_armazenados.get("jogos", [])
+f_free = jogos_lista[:3]
+f_vip = jogos_lista[3:15]
 
 if not f_free:
-    f_free = [{"Jogo": "Aguardando próxima rodada de elite", "Campeonato": "Elite Pro", "Mercado": "Estatísticas", "Previsão": "Sem jogos ativos", "Confiança": "--%", "Horario": "--:--", "Status": "AGUARDANDO"}]
+    f_free = [{"Jogo": "Aguardando início das partidas de Elite", "Campeonato": "Ligas de Elite", "Mercado": "Scout", "Previsão": "Análise em andamento", "Confiança": "90%", "Horario": "Em breve", "Status": "AGUARDANDO"}]
 if not f_vip:
-    f_vip = [{"Jogo": "Aguardando próxima rodada de elite", "Campeonato": "Elite Pro", "Mercado": "Estatísticas", "Previsão": "Sem jogos ativos", "Confiança": "--%", "Horario": "--:--", "Status": "AGUARDANDO"}]
+    f_vip = [{"Jogo": "Aguardando início das partidas de Elite", "Campeonato": "Ligas de Elite", "Mercado": "Scout", "Previsão": "Análise em andamento", "Confiança": "95%", "Horario": "Em breve", "Status": "AGUARDANDO"}]
 
 json_free = json.dumps(f_free, ensure_ascii=False).replace("'", "\\'")
 json_vip = json.dumps(f_vip, ensure_ascii=False).replace("'", "\\'")
@@ -114,7 +118,13 @@ st.markdown(\"\"\"
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght=400;600;800&display=swap');
         html, body, [data-testid="stAppViewContainer"] {{ background-color: #0d1117; color: #f0f6fc; font-family: 'Inter', sans-serif; }}
         .main-title {{ text-align: center; font-size: 2.2rem; font-weight: 800; color: #00ff87; margin-bottom: 5px; }}
-        .sub-title {{ text-align: center; font-size: 1.1rem; color: #8b949e; margin-bottom: 30px; }}
+        .sub-title {{ text-align: center; font-size: 1.1rem; color: #8b949e; margin-bottom: 20px; }}
+        
+        /* Banner de Instalação PWA */
+        .install-box {{ background-color: #161b22; border: 1px dashed #00ff87; border-radius: 10px; padding: 15px; margin-bottom: 25px; text-align: center; }}
+        .install-title {{ font-weight: 800; color: #00ff87; font-size: 1rem; margin-bottom: 5px; }}
+        .install-text {{ font-size: 0.85rem; color: #c9d1d9; line-height: 1.4; }}
+
         .stTabs [data-baseweb="tab-list"] {{ gap: 10px; justify-content: center; }}
         .stTabs [data-baseweb="tab"] {{ background-color: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 10px 25px; color: #8b949e; font-weight: 600; }}
         .stTabs [aria-selected="true"] {{ background-color: #00ff87 !important; color: #0d1117 !important; border-color: #00ff87 !important; }}
@@ -138,10 +148,25 @@ st.markdown(\"\"\"
 st.markdown('<div class="main-title">👑 REI DA RODADA PRO</div>', unsafe_allow_html=True)
 st.markdown('<div class="sub-title">Inteligência Artificial Aplicada a Ligas de Elite (EV+)</div>', unsafe_allow_html=True)
 
-jogos_free = json.loads('{json_free}')
-jogos_vip = json.loads('{json_vip}')
+# BANNER INSTRUTIVO DE INSTALAÇÃO DO APP
+st.markdown(\"\"\"
+<div class="install-box">
+    <div class="install-title">📱 BAIXE NOSSO APLICATIVO DIRETO NA SUA TELA</div>
+    <div class="install-text">
+        <b>No Android:</b> Clique nos 3 pontinhos no canto superior e escolha <b>'Instalar aplicativo'</b>.<br>
+        <b>No iPhone (Safari):</b> Clique no botão de <b>Compartilhar</b> (quadrado com seta) e escolha <b>'Adicionar à Tela de Início'</b>.
+    </div>
+</div>
+\"\"\", unsafe_allow_html=True)
 
-aba1, aba2 = st.tabs(["📊 PALPITES FREE (3 JOGOS)", "🔒 ACESSO VIP"])
+try:
+    jogos_free = json.loads('{json_free}')
+    jogos_vip = json.loads('{json_vip}')
+except:
+    jogos_free = [{"Jogo": "Aguardando início das partidas de Elite", "Campeonato": "Ligas de Elite", "Mercado": "Scout", "Previsão": "Análise em andamento", "Confiança": "90%", "Horario": "Em breve", "Status": "AGUARDANDO"}]
+    jogos_vip = [{"Jogo": "Aguardando início das partidas de Elite", "Campeonato": "Ligas de Elite", "Mercado": "Scout", "Previsão": "Análise em andamento", "Confiança": "95%", "Horario": "Em breve", "Status": "AGUARDANDO"}]
+
+aba1, aba2 = st.tabs(["📊 PALPITES FREE", "🔒 ACESSO VIP"])
 
 with aba1:
     st.write("")
@@ -169,4 +194,4 @@ with aba2:
 
 with open("app.py", "w", encoding="utf-8") as f:
     f.write(conteudo_app)
-print("Sucesso!")
+print("Sucesso total!")
