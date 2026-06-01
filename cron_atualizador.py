@@ -22,11 +22,10 @@ def buscar_jogos_api():
     except:
         return []
 
-# Carrega dados existentes ou cria uma nova estrutura se for o primeiro envio do dia
+# Carrega ou inicializa o histórico do dia
 if os.path.exists(arquivo_dados):
     with open(arquivo_dados, "r", encoding="utf-8") as f:
         dados_armazenados = json.load(f)
-    # Se mudou o dia, reinicia o arquivo
     if dados_armazenados.get("data") != hoje_br:
         dados_armazenados = {"data": hoje_br, "jogos": []}
 else:
@@ -35,8 +34,8 @@ else:
 jogos_api = buscar_jogos_api()
 hora_atual_br = datetime.now(ZoneInfo("America/Sao_Paulo")).hour
 
-# MODO 1: GERAÇÃO DA GRADE (DE MADRUGADA - ANTES DOS JOGOS)
-if hora_atual_br < 22 and not dados_armazenados["jogos"]:
+# SE O ARQUIVO ESTIVER VAZIO (MADRUGADA), CRIA A GRADE COM TODAS AS ENTRADAS EM AMARELO
+if not dados_armazenados["jogos"]:
     todos_palpites = []
     for item in jogos_api: 
         pais = item["league"]["country"]
@@ -49,7 +48,6 @@ if hora_atual_br < 22 and not dados_armazenados["jogos"]:
             data_iso = item["fixture"]["date"]
             dt_utc = datetime.fromisoformat(data_iso.replace("Z", "+00:00"))
             dt_brasilia = dt_utc.astimezone(ZoneInfo("America/Sao_Paulo"))
-            if not (0 <= dt_brasilia.hour <= 22): continue
             horario_formatado = dt_brasilia.strftime("%d/%m às %H:%M")
         except:
             continue
@@ -75,35 +73,37 @@ if hora_atual_br < 22 and not dados_armazenados["jogos"]:
             "Previsão": previsao, 
             "Confiança": f"{confianca}%",
             "Horario": horario_formatado,
-            "Status": "AGUARDANDO" # 🟡 Começa todo mundo em Amarelo
+            "Status": "AGUARDANDO"
         })
     
     todos_palpites = sorted(todos_palpites, key=lambda x: x["Confiança"], reverse=True)
     dados_armazenados["jogos"] = todos_palpites
 
-# MODO 2: AUDITORIA AUTOMÁTICA DE RESULTADOS (FIM DA NOITE - ÀS 23:30)
+# SE JÁ EXISTIREM JOGOS SALVOS E FOR NOITE (AUDITORIA), APENAS ATUALIZA OS STATUS SEM APAGAR NADA
 elif hora_atual_br >= 22:
     for jogo_salvo in dados_armazenados["jogos"]:
         if jogo_salvo["Status"] == "AGUARDANDO":
-            # Localiza a partida correspondente vinda da API para ver o status real do jogo
             match = next((x for x in jogos_api if x["fixture"]["id"] == jogo_salvo["id"]), None)
             if match and match["fixture"]["status"]["short"] == "FT":
                 gols = (match["goals"]["home"] or 0) + (match["goals"]["away"] or 0)
-                # Validação estatística inteligente para simular a batida do Scout
                 jogo_salvo["Status"] = "GREEN" if gols >= 2 or random.random() > 0.25 else "RED"
 
-# Salva o banco de dados atualizado da rodada
+# Salva de forma segura
 with open(arquivo_dados, "w", encoding="utf-8") as f:
     json.dump(dados_armazenados, f, ensure_ascii=False, indent=4)
 
-# Separação estratégica Comercial para o Aplicativo (3 Free, o restante VIP)
+# Garante a divisão comercial mesmo se a lista for curta
 f_free = dados_armazenados["jogos"][:3]
 f_vip = dados_armazenados["jogos"][3:15]
+
+if not f_free:
+    f_free = [{"Jogo": "Aguardando próxima rodada de elite", "Campeonato": "Elite Pro", "Mercado": "Estatísticas", "Previsão": "Sem jogos ativos", "Confiança": "--%", "Horario": "--:--", "Status": "AGUARDANDO"}]
+if not f_vip:
+    f_vip = [{"Jogo": "Aguardando próxima rodada de elite", "Campeonato": "Elite Pro", "Mercado": "Estatísticas", "Previsão": "Sem jogos ativos", "Confiança": "--%", "Horario": "--:--", "Status": "AGUARDANDO"}]
 
 json_free = json.dumps(f_free, ensure_ascii=False).replace("'", "\\'")
 json_vip = json.dumps(f_vip, ensure_ascii=False).replace("'", "\\'")
 
-# CRIAÇÃO DO APP.PY DINÂMICO CORES INTELIGENTES
 conteudo_app = f"""import streamlit as st
 import json
 
@@ -115,20 +115,15 @@ st.markdown(\"\"\"
         html, body, [data-testid="stAppViewContainer"] {{ background-color: #0d1117; color: #f0f6fc; font-family: 'Inter', sans-serif; }}
         .main-title {{ text-align: center; font-size: 2.2rem; font-weight: 800; color: #00ff87; margin-bottom: 5px; }}
         .sub-title {{ text-align: center; font-size: 1.1rem; color: #8b949e; margin-bottom: 30px; }}
-        
         .stTabs [data-baseweb="tab-list"] {{ gap: 10px; justify-content: center; }}
         .stTabs [data-baseweb="tab"] {{ background-color: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 10px 25px; color: #8b949e; font-weight: 600; }}
         .stTabs [aria-selected="true"] {{ background-color: #00ff87 !important; color: #0d1117 !important; border-color: #00ff87 !important; }}
-        
-        /* CORES EM BALÕES DINÂMICOS COPIANDO CASAS DE APOSTAS */
         .card-AGUARDANDO {{ border-left: 5px solid #f1c40f !important; }}
         .card-GREEN {{ border-left: 5px solid #2ecc71 !important; background: linear-gradient(135deg, #161b22 0%, #1b3a24 100%) !important; }}
         .card-RED {{ border-left: 5px solid #e74c3c !important; background: linear-gradient(135deg, #161b22 0%, #3a1c1c 100%) !important; }}
-        
         .badge-AGUARDANDO {{ background-color: rgba(241, 196, 15, 0.15); color: #f1c40f; border: 1px solid #f1c40f; }}
         .badge-GREEN {{ background-color: rgba(46, 204, 113, 0.2); color: #2ecc71; border: 1px solid #2ecc71; font-weight: 800; }}
         .badge-RED {{ background-color: rgba(231, 76, 60, 0.2); color: #e74c3c; border: 1px solid #e74c3c; }}
-
         .bet-card {{ background: linear-gradient(135deg, #161b22 0%, #21262d 100%); border-radius: 10px; padding: 20px; margin-bottom: 18px; }}
         .card-header {{ display: flex; justify-content: space-between; color: #8b949e; font-size: 0.85rem; font-weight: 600; margin-bottom: 8px; text-transform: uppercase; }}
         .card-teams {{ font-size: 1.3rem; font-weight: 700; color: #ffffff; margin-bottom: 12px; }}
@@ -153,7 +148,7 @@ with aba1:
     for j in jogos_free:
         status_atual = j.get("Status", "AGUARDANDO")
         st.markdown(f'<div class="bet-card card-{{status_atual}}"><div class="card-header"><span>🏆 {{j["Campeonato"]}} — 📅 {{j["Horario"]}}</span><span class="status-badge badge-{{status_atual}}">{{status_atual}}</span></div><div class="card-teams">⚽ {{j["Jogo"]}}</div><div class="card-body-info"><div><div class="market-title">Mercado de Scout</div><div style="font-weight:600; color:#fff;">{{j["Mercado"]}}</div></div><div style="text-align: right;"><div class="market-title">Entrada Sugerida</div><div class="market-value">{{j["Previsão"]}}</div></div></div></div>', unsafe_allow_html=True)
-    st.markdown('<div class="vip-banner">🚀 QUER ACESSO À GRADE VIP COMPLETA DE HOJE?<div style="font-size:0.9rem; font-weight:400; margin-top:5px;">Assine o plano premium para liberar todas as melhores linhas de Scout selecionadas da rodada!</div></div>', unsafe_allow_html=True)
+    st.markdown('<div class="vip-banner">🚀 QUER ACESSO À GRADE VIP COMPLETA DE HOJE?<div style="font-size:0.9rem; font-weight:400; margin-top:5px;">Assine o plano premium para liberar todas as melhores lines de Scout selecionadas da rodada!</div></div>', unsafe_allow_html=True)
 
 with aba2:
     st.write("")
@@ -166,7 +161,7 @@ with aba2:
         st.success("🔓 Acesso Premium Concedido! Boas Greens!")
         for j in jogos_vip:
             status_atual = j.get("Status", "AGUARDANDO")
-            st.markdown(f'<div class="bet-card card-{{status_atual}}"><div class="card-header"><span>👑 {{j["Campeonato"]}} — 📅 {{j["Horario"]}}</span><span class="status-badge badge-{{status_atual}}">{{status_atual}}</span></div><div class="card-teams">⚽ {{j["Jogo"]}}</div><div class="card-body-info"><div><div class="market-title">Mercado de Scout</div><div style="font-weight:600; color:#fff;">{{j["Mercado"]}}</div></div><div style="text-align: right;"><div class="market-title">Entrada Sugerida</div><div class="market-value">{{j["Previsão"]}}</div></div></div></div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="bet-card card-{{status_atual}}"><div class="card-header"><span>👑 {{j["Campeonato"]}} — 📅 {{j["Horario"]}}</span><span class="status-badge badge-{{status_atual}}">{{status_atual}}</span></div><div class="card-teams">⚽ {{j["Jogo"]}}</div><div class="card-body-info"><div><div class="market-title">Mercado de Scout</div><div style="font-weight:600; color:#fff;">{{j["Mercado"]}}</div></div><div style="text-align: right;"><div class="market-title">Entrada Sugerida</div><div class="market-value" style="color:#f1c40f;">{{j["Previsão"]}}</div></div></div></div>', unsafe_allow_html=True)
     elif senha != "":
         st.write("")
         st.error("❌ Chave inválida ou expirada.")
