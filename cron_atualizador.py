@@ -9,10 +9,7 @@ API_KEY = "53795b533294d9dd1065064221c9f3a4"
 HEADERS = {"x-rapidapi-key": API_KEY, "x-rapidapi-host": "v3.football.api-sports.io"}
 
 PAISES_ELITE = ["Brazil", "USA", "Argentina", "Japan", "Mexico", "Colombia", "Ecuador"]
-TERMOS_PERMITIDOS = ["Serie B", "Major League Soccer", "Copa Argentina", "J1 League", "Liga de Expansion", "Primera A", "LigaPro"]Segunda Liga", "Eredivisie", "Eerste Divisie", "Jupiler Pro League", "Challenger Pro League", "Eliteserien", "Liga Profesional", "Primera Division", "Copa Libertadores", "Copa Sudamericana", "Major League Soccer", "Liga MX"]
-
-hoje_br = datetime.now(ZoneInfo("America/Sao_Paulo")).strftime("%Y-%m-%d")
-arquivo_dados = "jogos_status.json"
+TERMOS_PERMITIDOS = ["Serie B", "Major League Soccer", "Copa Argentina", "J1 League", "Liga de Expansion", "Primera A", "LigaPro"]
 
 def buscar_jogos_api():
     url = f"https://v3.football.api-sports.io/fixtures?date={hoje_br}"
