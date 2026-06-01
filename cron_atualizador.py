@@ -108,7 +108,6 @@ import json
 
 st.set_page_config(page_title="REI DA RODADA PRO", page_icon="⚽", layout="centered")
 
-# INJETA O ÍCONE PERSONALIZADO DIRETO NO NAVEGADOR DO CELULAR
 st.markdown(\"\"\"
 <head>
     <link rel="apple-touch-icon" sizes="192x192" href="https://img.icons8.com/gold/192/football-ball.png">
@@ -176,7 +175,7 @@ with aba1:
     st.write("")
     for j in jogos_free:
         status_atual = j.get("Status", "AGUARDANDO")
-        card_html = f'<div class="bet-card card-{status_atual}"><div class="card-header"><span>🏆 {j["Campeonato"]} — 📅 {j["Horario"]}</span><span class="status-badge badge-{status_atual}">{status_atual}</span></div><div class="card-teams">⚽ {j["Jogo"]}</div><div class="card-body-info"><div><div class="market-title">Mercado de Scout</div><div style="font-weight:600; color:#fff;">{j["Market"]}</div></div><div style="text-align: right;"><div class="market-title">Entrada Sugerida</div><div class="market-value">{j["Previsão"]}</div></div></div></div>'
+        card_html = f'<div class="bet-card card-{status_atual}"><div class="card-header"><span>🏆 {j["Campeonato"]} — 📅 {j["Horario"]}</span><span class="status-badge badge-{status_atual}">{status_atual}</span></div><div class="card-teams">⚽ {j["Jogo"]}</div><div class="card-body-info"><div><div class="market-title">Mercado de Scout</div><div style="font-weight:600; color:#fff;">{j["Mercado"]}</div></div><div style="text-align: right;"><div class="market-title">Entrada Sugerida</div><div class="market-value">{j["Previsão"]}</div></div></div></div>'
         st.markdown(card_html, unsafe_allow_html=True)
     st.markdown('<div class="vip-banner">🚀 QUER ACESSO À GRADE VIP COMPLETA DE HOJE?<div style="font-size:0.9rem; font-weight:400; margin-top:5px;">Assine o plano premium para liberar todas as melhores lines de Scout selecionadas da rodada!</div></div>', unsafe_allow_html=True)
 
@@ -191,7 +190,7 @@ with aba2:
         st.success("🔓 Acesso Premium Concedido! Boas Greens!")
         for j in jogos_vip:
             status_atual = j.get("Status", "AGUARDANDO")
-            card_vip_html = f'<div class="bet-card card-{status_atual}"><div class="card-header"><span>👑 {j["Campeonato"]} — 📅 {j["Horario"]}</span><span class="status-badge badge-{status_atual}">{status_atual}</span></div><div class="card-teams">⚽ {j["Jogo"]}</div><div class="card-body-info"><div><div class="market-title">Mercado de Scout</div><div style="font-weight:600; color:#fff;">{j["Market"]}</div></div><div style="text-align: right;"><div class="market-title">Entrada Sugerida</div><div class="market-value" style="color:#f1c40f;">{j["Previsão"]}</div></div></div></div>'
+            card_vip_html = f'<div class="bet-card card-{status_atual}"><div class="card-header"><span>👑 {j["Campeonato"]} — 📅 {j["Horario"]}</span><span class="status-badge badge-{status_atual}">{status_atual}</span></div><div class="card-teams">⚽ {j["Jogo"]}</div><div class="card-body-info"><div><div class="market-title">Mercado de Scout</div><div style="font-weight:600; color:#fff;">{j["Mercado"]}</div></div><div style="text-align: right;"><div class="market-title">Entrada Sugerida</div><div class="market-value" style="color:#f1c40f;">{j["Previsão"]}</div></div></div></div>'
             st.markdown(card_vip_html, unsafe_allow_html=True)
     elif senha != "":
         st.write("")
