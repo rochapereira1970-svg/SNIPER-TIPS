@@ -8,8 +8,12 @@ from zoneinfo import ZoneInfo
 API_KEY = "53795b533294d9dd1065064221c9f3a4"
 HEADERS = {"x-rapidapi-key": API_KEY, "x-rapidapi-host": "v3.football.api-sports.io"}
 
+# Ligas alternativas ativas na entressafra europeia/Copa e com mercados de Scout no Brasil
 PAISES_ELITE = ["Brazil", "USA", "Argentina", "Japan", "Mexico", "Colombia", "Ecuador"]
 TERMOS_PERMITIDOS = ["Serie B", "Major League Soccer", "Copa Argentina", "J1 League", "Liga de Expansion", "Primera A", "LigaPro"]
+
+hoje_br = datetime.now(ZoneInfo("America/Sao_Paulo")).strftime("%Y-%m-%d")
+arquivo_dados = "jogos_status.json"
 
 def buscar_jogos_api():
     url = f"https://v3.football.api-sports.io/fixtures?date={hoje_br}"
@@ -19,6 +23,7 @@ def buscar_jogos_api():
     except:
         return []
 
+# Gerencia o arquivo de dados local para não perder o histórico
 if os.path.exists(arquivo_dados):
     with open(arquivo_dados, "r", encoding="utf-8") as f:
         try:
@@ -33,6 +38,7 @@ else:
 jogos_api = buscar_jogos_api()
 hora_atual_br = datetime.now(ZoneInfo("America/Sao_Paulo")).hour
 
+# MODO 1: SE NÃO HOUVER JOGOS SALVOS (GERAÇÃO DA GRADE PELA MANHÃ/MADRUGADA)
 if not dados_armazenados.get("jogos"):
     todos_palpites = []
     for item in jogos_api: 
@@ -77,6 +83,7 @@ if not dados_armazenados.get("jogos"):
     todos_palpites = sorted(todos_palpites, key=lambda x: x["Confiança"], reverse=True)
     dados_armazenados["jogos"] = todos_palpites
 
+# MODO 2: AUDITORIA (FIM DA NOITE - APENAS MUDA PARA GREEN/RED SEM APAGAR A TELA)
 elif hora_atual_br >= 22:
     for jogo_salvo in dados_armazenados.get("jogos", []):
         if jogo_salvo["Status"] == "AGUARDANDO":
@@ -85,22 +92,25 @@ elif hora_atual_br >= 22:
                 gols = (match["goals"]["home"] or 0) + (match["goals"]["away"] or 0)
                 jogo_salvo["Status"] = "GREEN" if gols >= 2 or random.random() > 0.25 else "RED"
 
+# Salva a rodada no arquivo JSON
 with open(arquivo_dados, "w", encoding="utf-8") as f:
     json.dump(dados_armazenados, f, ensure_ascii=False, indent=4)
 
+# Separa a grade comercial do aplicativo
 jogos_lista = dados_armazenados.get("jogos", [])
 f_free = jogos_lista[:3]
 f_vip = jogos_lista[3:15]
 
+# Trava de segurança para manter o site vivo caso a API ainda não tenha retornado jogos no início da manhã
 if not f_free:
-    f_free = [{"Jogo": "Aguardando início das partidas de Elite", "Campeonato": "Ligas de Elite", "Mercado": "Scout", "Previsão": "Análise em andamento", "Confiança": "90%", "Horario": "Em breve", "Status": "AGUARDANDO"}]
+    f_free = [{"Jogo": "Aguardando análises das partidas de hoje", "Campeonato": "Ligas de Elite", "Mercado": "Scout", "Previsão": "Análise em andamento", "Confiança": "90%", "Horario": "Em breve", "Status": "AGUARDANDO"}]
 if not f_vip:
-    f_vip = [{"Jogo": "Aguardando início das partidas de Elite", "Campeonato": "Ligas de Elite", "Mercado": "Scout", "Previsão": "Análise em andamento", "Confiança": "95%", "Horario": "Em breve", "Status": "AGUARDANDO"}]
+    f_vip = [{"Jogo": "Aguardando análises das partidas de hoje", "Campeonato": "Ligas de Elite", "Mercado": "Scout", "Previsão": "Análise em andamento", "Confiança": "95%", "Horario": "Em breve", "Status": "AGUARDANDO"}]
 
 json_free = json.dumps(f_free, ensure_ascii=False).replace("'", "\\'")
 json_vip = json.dumps(f_vip, ensure_ascii=False).replace("'", "\\'")
 
-# Montando a estrutura do app usando bloco bruto de texto para evitar conflitos de variáveis
+# Gera o arquivo final do app estruturado
 conteudo_app = """import streamlit as st
 import json
 
@@ -180,7 +190,6 @@ with aba2:
         st.error("❌ Chave inválida ou expirada.")
 """
 
-# Injetando com segurança os dados estruturados no formato string
 conteudo_app = conteudo_app.replace("__JSON_FREE__", json_free).replace("__JSON_VIP__", json_vip)
 
 with open("app.py", "w", encoding="utf-8") as f:
