@@ -6,6 +6,15 @@ st.set_page_config(page_title="REI DA RODADA PRO", page_icon="⚽", layout="cent
 css_estilo = """
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght=400;600;800&display=swap');
+    
+    /* BLOQUEIA MENUS PADRÃO DO STREAMLIT PARA EVITAR TELA DE LOGIN */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
+    stDeployButton {display:none;}
+    [data-testid="stToolbar"] {visibility: hidden !important;}
+    [data-testid="stDecoration"] {display:none !important;}
+    
     html, body, [data-testid="stAppViewContainer"] { background-color: #0d1117; color: #f0f6fc; font-family: 'Inter', sans-serif; }
     .main-title { text-align: center; font-size: 2.2rem; font-weight: 800; color: #00ff87; margin-bottom: 5px; }
     .sub-title { text-align: center; font-size: 1.1rem; color: #8b949e; margin-bottom: 20px; }
