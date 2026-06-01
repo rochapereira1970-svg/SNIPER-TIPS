@@ -108,10 +108,15 @@ import json
 
 st.set_page_config(page_title="REI DA RODADA PRO", page_icon="⚽", layout="centered")
 
+# MARCAÇÃO FORÇADA DE ÍCONE PARA DISPOSITIVOS MÓVEIS
 st.markdown(\"\"\"
 <head>
-    <link rel="apple-touch-icon" sizes="192x192" href="https://img.icons8.com/gold/192/football-ball.png">
-    <link rel="icon" type="image/png" sizes="192x192" href="https://img.icons8.com/gold/192/football-ball.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="https://i.ibb.co/6wXgYgC/bola-ouro.png">
+    <link rel="apple-touch-icon" sizes="192x192" href="https://i.ibb.co/6wXgYgC/bola-ouro.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="https://i.ibb.co/6wXgYgC/bola-ouro.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="https://i.ibb.co/6wXgYgC/bola-ouro.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="REI DA RODADA">
 </head>
 \"\"\", unsafe_allow_html=True)
 
