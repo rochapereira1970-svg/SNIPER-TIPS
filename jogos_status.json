@@ -1,4 +1,95 @@
 {
-    "data": "2026-06-01",
-    "jogos": []
+  "ultima_atualizacao": "02/06/2026 - 22:00h",
+  "jogos_analisados": [
+    {
+      "time_casa": "Croácia",
+      "time_fora": "Bélgica",
+      "campeonato": "Amistoso Internacional",
+      "horario": "13:00",
+      "odd": "1.85",
+      "mercado": "⚽ Mais de 8.5 Chutes no Gol (Partida)",
+      "justificativa": "Ambas as equipas utilizam esquemas ofensivos verticais em preparação. O histórico recente de finalizações indica uma média combinada superior a 10.4 remates à baliza por jogo."
+    },
+    {
+      "time_casa": "País de Gales",
+      "time_fora": "Gana",
+      "campeonato": "Amistoso Internacional",
+      "horario": "15:45",
+      "odd": "1.90",
+      "mercado": "🟨 Mais de 25.5 Faltas Cometidas (Partida)",
+      "justificativa": "Estilo de jogo britânico de forte impacto físico somado à transição em transição rápida do Gana. Linha de faltas desajustada pelas bancas, tendência matemática clara para jogo faltoso."
+    },
+    {
+      "time_casa": "Ponte Preta",
+      "time_fora": "Botafogo (SP)",
+      "campeonato": "Brasileirão Série B",
+      "horario": "19:00",
+      "odd": "1.78",
+      "mercado": "🧤 Goleiro do Botafogo-SP: +3.5 Defesas",
+      "justificativa": "A Ponte Preta apresenta uma alta taxa de volume de remates de média distância jogando no Moisés Lucarelli, exigindo um rácio elevado de paradas do guarda-redes visitante."
+    },
+    {
+      "time_casa": "Marrocos",
+      "time_fora": "Madagascar",
+      "campeonato": "Amistoso Internacional",
+      "horario": "14:00",
+      "odd": "1.82",
+      "mercado": "🏁 Mais de 3.5 Impedimentos (Partida)",
+      "justificativa": "Marrocos atua com linhas de defesa muito subidas e Madagascar explora contra-ataques em velocidade, gerando alta propensão a forçar fora de jogo."
+    },
+    {
+      "time_casa": "Haiti",
+      "time_fora": "Nova Zelândia",
+      "campeonato": "Amistoso Internacional",
+      "horario": "21:00",
+      "odd": "2.10",
+      "mercado": "⚽ Nova Zelândia: Mais de 4.5 Chutes no Gol",
+      "justificativa": "Diferença técnica estrutural no jogo aéreo. A Nova Zelândia retém volume de ataque no terço final contra seleções de menor expressão defensiva."
+    },
+    {
+      "time_casa": "Geórgia",
+      "time_fora": "Roménia",
+      "campeonato": "Amistoso Internacional",
+      "horario": "14:00",
+      "odd": "1.95",
+      "mercado": "🟨 Geórgia: Mais de 12.5 Faltas Cometidas",
+      "justificativa": "Equipa com transição defensiva agressiva e bloco baixo. Média de paragens táticas muito alta quando enfrenta seleções de posse de bola europeia."
+    },
+    {
+      "time_casa": "Canadá",
+      "time_fora": "Uzbequistão",
+      "campeonato": "Amistoso Internacional",
+      "horario": "19:00",
+      "odd": "1.88",
+      "mercado": "🧤 Mais de 6.5 Defesas de Goleiro Somadas",
+      "justificativa": "Ambos os sistemas defensivos oferecem espaços nas entrelinhas para remates de fora da área. Expectativa de arqueiros bastante acionados."
+    },
+    {
+      "time_casa": "Universitario",
+      "time_fora": "Aurora",
+      "campeonato": "Divisão Profissional (Bolívia)",
+      "horario": "20:00",
+      "odd": "1.80",
+      "mercado": "⚽ Mais de 22.5 Chutes Totais (Partida)",
+      "justificativa": "Fator altitude e linhas de marcação espaçadas resultam num jogo de transições velozes e alto índice de tentativas de remate de qualquer distância."
+    },
+    {
+      "time_casa": "Leones del Norte",
+      "time_fora": "Macará",
+      "campeonato": "Série A (Equador)",
+      "horario": "17:00",
+      "odd": "1.92",
+      "mercado": "🟨 Mais de 27.5 Faltas Cometidas (Partida)",
+      "justificativa": "Rivalidade local intensa com arbitragem rigorosa. Média histórica do campeonato ultrapassa com facilidade a linha proposta."
+    },
+    {
+      "time_casa": "Técnico Universitario",
+      "time_fora": "Barcelona",
+      "campeonato": "Série A (Equador)",
+      "horario": "19:30",
+      "odd": "1.85",
+      "mercado": "🏁 Barcelona: Mais de 2.5 Impedimentos",
+      "justificativa": "Barcelona costuma projetar os seus extremos em velocidade nas costas da zaga adversária, caindo recorrentemente em posição irregular devido ao timing do passe."
+    }
+  ]
 }
